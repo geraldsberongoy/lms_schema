@@ -34,7 +34,7 @@ jobs:
           find . -type f -name '*.mmd' -print0 | while IFS= read -r -d '' file; do
             out="${file%.mmd}.svg"
             echo "Rendering $file -> $out"
-            mmdc -i "$file" -o "$out" --no-sandbox --disable-gpu --disable-dev-shm-usage
+            mmdc -i "$file" -o "$out" --disable-gpu --disable-dev-shm-usage
           done
 
       - name: Commit and push generated diagrams
