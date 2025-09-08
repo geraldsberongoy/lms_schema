@@ -7,7 +7,7 @@ permissions:
 on:
   push:
     paths:
-      - 'diagrams/*.mmd'
+      - 'diagram/*.mmd'
 
 jobs:
   render:
