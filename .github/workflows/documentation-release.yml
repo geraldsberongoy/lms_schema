@@ -21,7 +21,24 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g @mermaid-js/mermaid-cli@latest
-          sudo apt-get update && sudo apt-get install -y pandoc
+          sudo apt-get update && sudo apt-get install -y pandoc libnss3-dev libatk-bridge2.0-dev libdrm-dev libxkbcommon-dev libgtk-3-dev libgbm-dev libasound2-dev
+
+      - name: Create Puppeteer config
+        run: |
+          cat > puppeteer.config.json << 'EOF'
+          {
+            "args": [
+              "--no-sandbox",
+              "--disable-setuid-sandbox",
+              "--disable-dev-shm-usage",
+              "--disable-accelerated-2d-canvas",
+              "--no-first-run",
+              "--no-zygote",
+              "--single-process",
+              "--disable-gpu"
+            ]
+          }
+          EOF
 
       - name: Generate documentation package
         run: |
@@ -30,9 +47,9 @@ jobs:
           # Generate high-quality diagrams
           find . -name '*.mmd' | while read file; do
             base=$(basename "$file" .mmd)
-            mmdc -i "$file" -o "release-docs/${base}.svg" --theme default --backgroundColor white --width 1600 --height 1200
-            mmdc -i "$file" -o "release-docs/${base}.png" --theme default --backgroundColor white --width 1600 --height 1200
-            mmdc -i "$file" -o "release-docs/${base}.pdf" --theme default --backgroundColor white --width 1600 --height 1200
+            mmdc -i "$file" -o "release-docs/${base}.svg" --puppeteerConfigFile puppeteer.config.json --theme default --backgroundColor white --width 1600 --height 1200
+            mmdc -i "$file" -o "release-docs/${base}.png" --puppeteerConfigFile puppeteer.config.json --theme default --backgroundColor white --width 1600 --height 1200
+            mmdc -i "$file" -o "release-docs/${base}.pdf" --puppeteerConfigFile puppeteer.config.json --theme default --backgroundColor white --width 1600 --height 1200
           done
 
           # Generate different formats of README

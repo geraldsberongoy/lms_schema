@@ -27,15 +27,44 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libatk-bridge2.0-dev \
+            libdrm-dev \
+            libxkbcommon-dev \
+            libgtk-3-dev \
+            libgbm-dev \
+            libasound2-dev
+
       - name: Install mermaid CLI
         run: npm install -g @mermaid-js/mermaid-cli@latest
+
+      - name: Create Puppeteer config
+        run: |
+          cat > puppeteer.config.json << 'EOF'
+          {
+            "args": [
+              "--no-sandbox",
+              "--disable-setuid-sandbox",
+              "--disable-dev-shm-usage",
+              "--disable-accelerated-2d-canvas",
+              "--no-first-run",
+              "--no-zygote",
+              "--single-process",
+              "--disable-gpu"
+            ]
+          }
+          EOF
 
       - name: Validate Mermaid files
         run: |
           echo "🔍 Validating Mermaid syntax..."
           find . -type f -name '*.mmd' | while read file; do
             echo "Validating: $file"
-            mmdc -i "$file" -o "/tmp/$(basename "$file" .mmd).svg" --quiet
+            mmdc -i "$file" -o "/tmp/$(basename "$file" .mmd).svg" --puppeteerConfigFile puppeteer.config.json --quiet
             if [ $? -eq 0 ]; then
               echo "✅ $file is valid"
             else
