@@ -1,0 +1,48 @@
+name: Generate Mermaid diagrams
+
+# allow the workflow to write back (commit) to the repo
+permissions:
+  contents: write
+
+on:
+  push:
+    paths:
+      - '**/*.mmd'
+      - '**/*.md'   # optional if you ever place mermaid in markdown files
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true  # ensures GITHUB_TOKEN can push
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install mermaid CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Generate diagrams (.mmd -> .svg)
+        run: |
+          set -e
+          # find .mmd files and render to SVG next to source (recurses directories)
+          find . -type f -name '*.mmd' -print0 | while IFS= read -r -d '' file; do
+            out="${file%.mmd}.svg"
+            echo "Rendering $file -> $out"
+            mmdc -i "$file" -o "$out"
+          done
+
+      - name: Commit and push generated diagrams
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '**/*.svg' || true
+          git commit -m "chore: auto-generated mermaid diagrams" || echo "No changes to commit"
+          git push
