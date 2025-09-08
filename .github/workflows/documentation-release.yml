@@ -1,0 +1,81 @@
+name: 📋 Generate Schema Documentation Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  generate-docs:
+    name: 📚 Generate Documentation Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          npm install -g @mermaid-js/mermaid-cli@latest
+          sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: Generate documentation package
+        run: |
+          mkdir -p release-docs
+
+          # Generate high-quality diagrams
+          find . -name '*.mmd' | while read file; do
+            base=$(basename "$file" .mmd)
+            mmdc -i "$file" -o "release-docs/${base}.svg" --theme default --backgroundColor white --width 1600 --height 1200
+            mmdc -i "$file" -o "release-docs/${base}.png" --theme default --backgroundColor white --width 1600 --height 1200
+            mmdc -i "$file" -o "release-docs/${base}.pdf" --theme default --backgroundColor white --width 1600 --height 1200
+          done
+
+          # Generate different formats of README
+          cp README.md release-docs/
+          if command -v pandoc &> /dev/null; then
+            pandoc README.md -o release-docs/README.pdf
+            pandoc README.md -o release-docs/README.html
+          fi
+
+          # Create a schema summary
+          echo "# Database Schema Summary" > release-docs/SCHEMA_SUMMARY.md
+          echo "Generated on: $(date)" >> release-docs/SCHEMA_SUMMARY.md
+          echo "" >> release-docs/SCHEMA_SUMMARY.md
+
+          tables=$(grep -c "^\s*\w\+\s*{" diagram/schema.mmd)
+          relationships=$(grep -c "||--" diagram/schema.mmd)
+
+          echo "## Statistics" >> release-docs/SCHEMA_SUMMARY.md
+          echo "- Total Tables: $tables" >> release-docs/SCHEMA_SUMMARY.md
+          echo "- Total Relationships: $relationships" >> release-docs/SCHEMA_SUMMARY.md
+          echo "" >> release-docs/SCHEMA_SUMMARY.md
+
+          echo "## Table List" >> release-docs/SCHEMA_SUMMARY.md
+          grep "^\s*\w\+\s*{" diagram/schema.mmd | sed 's/\s*{\s*//' | sed 's/^/- /' >> release-docs/SCHEMA_SUMMARY.md
+
+          # Create archive
+          tar -czf schema-documentation.tar.gz release-docs/
+          zip -r schema-documentation.zip release-docs/
+
+      - name: Upload documentation to release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./schema-documentation.zip
+          asset_name: schema-documentation.zip
+          asset_content_type: application/zip
+
+      - name: Upload as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-documentation
+          path: release-docs/
+          retention-days: 30
