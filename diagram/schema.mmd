@@ -1,139 +1,139 @@
 erDiagram
     users {
-        int id
-        enum role
-        enum status
+        int id PK "increment"
+        enum role "admin, teacher, student"
+        enum status "active, archived"
         datetime created_at
         datetime updated_at
     }
 
     user_credentials {
-        int user_id
-        varchar email
-        varchar password
+        int user_id PK "FK to users.id"
+        varchar email "unique, 100 chars"
+        varchar password "255 chars"
         datetime last_login
     }
 
     profiles {
-        int user_id
-        varchar first_name
-        varchar middle_name
-        varchar last_name
-        varchar gender
+        int user_id PK "FK to users.id"
+        varchar first_name "100 chars"
+        varchar middle_name "100 chars"
+        varchar last_name "100 chars"
+        varchar gender "20 chars"
         date birthdate
     }
 
     classrooms {
-        int id
-        int teacher_id
-        varchar name
-        varchar code
+        int id PK "increment"
+        int teacher_id "FK to users.id"
+        varchar name "255 chars"
+        varchar code "unique, 100 chars"
         text description
-        varchar subject
-        varchar grade_level
+        varchar subject "default: other"
+        varchar grade_level "default: college"
         json settings
-        enum status
+        enum status "active, archived, default: active"
         datetime created_at
         datetime updated_at
     }
 
     classroom_students {
-        int id
-        int classroom_id
-        int student_id
+        int id PK "increment"
+        int classroom_id "FK to classrooms.id"
+        int student_id "FK to users.id"
         datetime enrolled_at
-        enum status
+        enum status "active, pending, removed, default: active"
         timestamp joined_at
     }
 
     assignments {
-        int id
-        int classroom_id
-        varchar title
+        int id PK "increment"
+        int classroom_id "FK to classrooms.id"
+        varchar title "255 chars"
         text description
-        enum assignment_type
-        int points
+        enum assignment_type "assignment, quiz, material, project"
+        int points "default: 100"
         text instructions
         json attachments
-        enum status
-        boolean allow_late_submission
-        int late_penalty_percent
+        enum status "draft, published, completed, archived"
+        boolean allow_late_submission "default: true"
+        int late_penalty_percent "default: 0"
         datetime due_date
         datetime created_at
     }
 
     submissions {
-        int id
-        int assignment_id
-        int student_id
-        varchar file_path
-        enum status
+        int id PK "increment"
+        int assignment_id "FK to assignments.id"
+        int student_id "FK to users.id"
+        varchar file_path "255 chars"
+        enum status "draft, submitted, graded, returned"
         text feedback
         json attachments
-        boolean late_submission
+        boolean late_submission "default: false"
         datetime submitted_at
-        int grade
-        timestamp graded_at
-        int graded_by
+        int grade "nullable"
+        timestamp graded_at "nullable"
+        int graded_by "FK to users.id"
     }
 
     classroom_posts {
-        int id
-        int classroom_id
-        int author_id
+        int id PK "increment"
+        int classroom_id "FK to classrooms.id"
+        int author_id "FK to users.id"
         text content
-        enum post_type
+        enum post_type "announcement, assignment_link, material, discussion"
         json attachments
-        boolean is_pinned
+        boolean is_pinned "default: false"
         timestamp created_at
         timestamp updated_at
     }
 
     post_comments {
-        int id
-        int post_id
-        int author_id
+        int id PK "increment"
+        int post_id "FK to classroom_posts.id"
+        int author_id "FK to users.id"
         text content
         timestamp created_at
         timestamp updated_at
     }
 
     post_likes {
-        int id
-        int post_id
-        int user_id
+        int id PK "increment"
+        int post_id "FK to classroom_posts.id"
+        int user_id "FK to users.id"
         timestamp created_at
     }
 
     grade_categories {
-        int id
-        int classroom_id
-        varchar name
-        decimal weight_percentage
+        int id PK "increment"
+        int classroom_id "FK to classrooms.id"
+        varchar name "100 chars"
+        decimal weight_percentage "5,2"
         timestamp created_at
     }
 
     grades {
-        int id
-        int assignment_id
-        int student_id
-        decimal points_earned
-        decimal points_possible
-        decimal percentage
-        varchar letter_grade
+        int id PK "increment"
+        int assignment_id "FK to assignments.id"
+        int student_id "FK to users.id"
+        decimal points_earned "8,2"
+        decimal points_possible "8,2"
+        decimal percentage "5,2"
+        varchar letter_grade "5 chars"
         text feedback
-        int graded_by
+        int graded_by "FK to users.id"
         timestamp graded_at
         timestamp updated_at
     }
 
     classroom_settings {
-        int classroom_id
-        boolean allow_student_posts
-        boolean allow_student_comments
-        boolean allow_late_submissions
-        enum grade_visibility
-        enum grading_scale
+        int classroom_id PK "FK to classrooms.id"
+        boolean allow_student_posts "default: true"
+        boolean allow_student_comments "default: true"
+        boolean allow_late_submissions "default: true"
+        enum grade_visibility "hidden, individual, all"
+        enum grading_scale "standard, percentage, points, custom"
         boolean auto_publish_grades
         boolean enable_plagiarism_detection
         timestamp created_at
@@ -141,87 +141,92 @@ erDiagram
     }
 
     notifications {
-        int id
-        int user_id
-        int classroom_id
-        varchar title
+        int id PK "increment"
+        int user_id "FK to users.id"
+        int classroom_id "FK to classrooms.id"
+        varchar title "255 chars"
         text message
-        enum type
+        enum type "enrollment, assignment, grade, post, comment, system"
         boolean is_read
         int related_id
         timestamp created_at
     }
 
     notification_preferences {
-        int user_id
-        boolean email_new_enrollments
-        boolean email_assignment_submissions
-        boolean email_student_posts
-        boolean email_weekly_summary
-        boolean push_notifications
+        int user_id PK "FK to users.id"
+        boolean email_new_enrollments "default: true"
+        boolean email_assignment_submissions "default: true"
+        boolean email_student_posts "default: false"
+        boolean email_weekly_summary "default: true"
+        boolean push_notifications "default: true"
     }
 
     participation_records {
-        int id
-        int classroom_id
-        int student_id
+        int id PK "increment"
+        int classroom_id "FK to classrooms.id"
+        int student_id "FK to users.id"
         date date
-        enum participation_type
-        decimal points
+        enum participation_type "present, absent, late, excused"
+        decimal points "3,1, default: 1.0"
         text notes
-        int recorded_by
+        int recorded_by "FK to users.id"
         timestamp created_at
     }
 
     classroom_files {
-        int id
-        int classroom_id
-        int uploaded_by
-        varchar original_filename
-        varchar stored_filename
-        varchar file_path
+        int id PK "increment"
+        int classroom_id "FK to classrooms.id"
+        int uploaded_by "FK to users.id"
+        varchar original_filename "255 chars"
+        varchar stored_filename "255 chars"
+        varchar file_path "500 chars"
         int file_size
-        varchar mime_type
-        enum file_category
+        varchar mime_type "100 chars"
+        enum file_category "assignment, material, submission, post_attachment"
         int related_id
-        int download_count
+        int download_count "default: 0"
         timestamp created_at
     }
 
     activity_logs {
-        int id
-        int user_id
-        varchar action
+        int id PK "increment"
+        int user_id "FK to users.id"
+        varchar action "100 chars"
         text description
         text ip_address
         datetime created_at
     }
 
-    %% Relationships
-    users ||--o{ user_credentials : has
-    users ||--o{ profiles : has
-    users ||--o{ classrooms : teaches
-    users ||--o{ classroom_students : enrolls
-    users ||--o{ submissions : submits
-    users ||--o{ classroom_posts : authors
-    users ||--o{ post_comments : comments
-    users ||--o{ post_likes : likes
-    users ||--o{ grades : graded_by
-    users ||--o{ activity_logs : logs
-    users ||--o{ notifications : receives
-    users ||--o{ notification_preferences : configures
+    %% Relationships with specific column mappings
+    users ||--|| user_credentials : "id to user_id"
+    users ||--|| profiles : "id to user_id"
+    users ||--o{ classrooms : "id to teacher_id"
+    users ||--o{ classroom_students : "id to student_id"
+    users ||--o{ submissions : "id to student_id"
+    users ||--o{ submissions : "id to graded_by"
+    users ||--o{ classroom_posts : "id to author_id"
+    users ||--o{ post_comments : "id to author_id"
+    users ||--o{ post_likes : "id to user_id"
+    users ||--o{ grades : "id to student_id"
+    users ||--o{ grades : "id to graded_by"
+    users ||--o{ activity_logs : "id to user_id"
+    users ||--o{ notifications : "id to user_id"
+    users ||--|| notification_preferences : "id to user_id"
+    users ||--o{ participation_records : "id to student_id"
+    users ||--o{ participation_records : "id to recorded_by"
+    users ||--o{ classroom_files : "id to uploaded_by"
 
-    classrooms ||--o{ classroom_students : contains
-    classrooms ||--o{ assignments : assigns
-    classrooms ||--o{ classroom_posts : has
-    classrooms ||--o{ grade_categories : categorizes
-    classrooms ||--o{ classroom_settings : configures
-    classrooms ||--o{ notifications : triggers
-    classrooms ||--o{ participation_records : tracks
-    classrooms ||--o{ classroom_files : stores
+    classrooms ||--|| classroom_settings : "id to classroom_id"
+    classrooms ||--o{ classroom_students : "id to classroom_id"
+    classrooms ||--o{ assignments : "id to classroom_id"
+    classrooms ||--o{ classroom_posts : "id to classroom_id"
+    classrooms ||--o{ grade_categories : "id to classroom_id"
+    classrooms ||--o{ notifications : "id to classroom_id"
+    classrooms ||--o{ participation_records : "id to classroom_id"
+    classrooms ||--o{ classroom_files : "id to classroom_id"
 
-    assignments ||--o{ submissions : receives
-    assignments ||--o{ grades : evaluates
-    submissions ||--o{ grades : linked
-    classroom_posts ||--o{ post_comments : has
-    classroom_posts ||--o{ post_likes : receives
+    assignments ||--o{ submissions : "id to assignment_id"
+    assignments ||--o{ grades : "id to assignment_id"
+    
+    classroom_posts ||--o{ post_comments : "id to post_id"
+    classroom_posts ||--o{ post_likes : "id to post_id"
