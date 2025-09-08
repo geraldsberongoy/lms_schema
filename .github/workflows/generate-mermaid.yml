@@ -35,6 +35,23 @@ jobs:
       - name: Install mermaid CLI
         run: npm install -g @mermaid-js/mermaid-cli@latest
       
+      - name: Create Puppeteer config
+        run: |
+          cat > puppeteer.config.json << 'EOF'
+          {
+            "args": [
+              "--no-sandbox",
+              "--disable-setuid-sandbox",
+              "--disable-dev-shm-usage",
+              "--disable-accelerated-2d-canvas",
+              "--no-first-run",
+              "--no-zygote",
+              "--single-process",
+              "--disable-gpu"
+            ]
+          }
+          EOF
+      
       - name: Generate diagrams (.mmd -> .svg)
         run: |
           set -e
@@ -42,7 +59,7 @@ jobs:
           find . -type f -name '*.mmd' -print0 | while IFS= read -r -d '' file; do
             out="${file%.mmd}.svg"
             echo "Rendering $file -> $out"
-            mmdc -i "$file" -o "$out" --puppeteerConfig '{"args": ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-accelerated-2d-canvas", "--no-first-run", "--no-zygote", "--single-process", "--disable-gpu"]}'
+            mmdc -i "$file" -o "$out" --puppeteerConfigFile puppeteer.config.json
           done
       
       - name: Commit and push generated diagrams

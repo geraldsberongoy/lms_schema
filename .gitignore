@@ -1,0 +1,12 @@
+# Generated files
+*.svg
+
+# Puppeteer config (if generated)
+puppeteer.config.json
+
+# Node modules (if any)
+node_modules/
+
+# OS generated files
+.DS_Store
+Thumbs.db
