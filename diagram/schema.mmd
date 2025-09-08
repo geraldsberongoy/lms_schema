@@ -1,0 +1,227 @@
+erDiagram
+    users {
+        int id PK
+        enum role
+        enum status
+        datetime created_at
+        datetime updated_at
+    }
+
+    user_credentials {
+        int user_id PK FK
+        varchar email UNIQUE
+        varchar password
+        datetime last_login
+    }
+
+    profiles {
+        int user_id PK FK
+        varchar first_name
+        varchar middle_name
+        varchar last_name
+        varchar gender
+        date birthdate
+    }
+
+    classrooms {
+        int id PK
+        int teacher_id FK
+        varchar name
+        varchar code UNIQUE
+        text description
+        varchar subject
+        varchar grade_level
+        json settings
+        enum status
+        datetime created_at
+        datetime updated_at
+    }
+
+    classroom_students {
+        int id PK
+        int classroom_id FK
+        int student_id FK
+        datetime enrolled_at
+        enum status
+        timestamp joined_at
+    }
+
+    assignments {
+        int id PK
+        int classroom_id FK
+        varchar title
+        text description
+        enum assignment_type
+        int points
+        text instructions
+        json attachments
+        enum status
+        boolean allow_late_submission
+        int late_penalty_percent
+        datetime due_date
+        datetime created_at
+    }
+
+    submissions {
+        int id PK
+        int assignment_id FK
+        int student_id FK
+        varchar file_path
+        enum status
+        text feedback
+        json attachments
+        boolean late_submission
+        datetime submitted_at
+        int grade
+        timestamp graded_at
+        int graded_by FK
+    }
+
+    classroom_posts {
+        int id PK
+        int classroom_id FK
+        int author_id FK
+        text content
+        enum post_type
+        json attachments
+        boolean is_pinned
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    post_comments {
+        int id PK
+        int post_id FK
+        int author_id FK
+        text content
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    post_likes {
+        int id PK
+        int post_id FK
+        int user_id FK
+        timestamp created_at
+    }
+
+    grade_categories {
+        int id PK
+        int classroom_id FK
+        varchar name
+        decimal weight_percentage
+        timestamp created_at
+    }
+
+    grades {
+        int id PK
+        int assignment_id FK
+        int student_id FK
+        decimal points_earned
+        decimal points_possible
+        decimal percentage
+        varchar letter_grade
+        text feedback
+        int graded_by FK
+        timestamp graded_at
+        timestamp updated_at
+    }
+
+    classroom_settings {
+        int classroom_id PK FK
+        boolean allow_student_posts
+        boolean allow_student_comments
+        boolean allow_late_submissions
+        enum grade_visibility
+        enum grading_scale
+        boolean auto_publish_grades
+        boolean enable_plagiarism_detection
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    notifications {
+        int id PK
+        int user_id FK
+        int classroom_id FK
+        varchar title
+        text message
+        enum type
+        boolean is_read
+        int related_id
+        timestamp created_at
+    }
+
+    notification_preferences {
+        int user_id PK FK
+        boolean email_new_enrollments
+        boolean email_assignment_submissions
+        boolean email_student_posts
+        boolean email_weekly_summary
+        boolean push_notifications
+    }
+
+    participation_records {
+        int id PK
+        int classroom_id FK
+        int student_id FK
+        date date
+        enum participation_type
+        decimal points
+        text notes
+        int recorded_by FK
+        timestamp created_at
+    }
+
+    classroom_files {
+        int id PK
+        int classroom_id FK
+        int uploaded_by FK
+        varchar original_filename
+        varchar stored_filename
+        varchar file_path
+        int file_size
+        varchar mime_type
+        enum file_category
+        int related_id
+        int download_count
+        timestamp created_at
+    }
+
+    activity_logs {
+        int id PK
+        int user_id FK
+        varchar action
+        text description
+        text ipsaddress
+        datetime created_at
+    }
+
+    %% Relationships
+    users ||--o{ user_credentials : has
+    users ||--o{ profiles : has
+    users ||--o{ classrooms : teaches
+    users ||--o{ classroom_students : enrolls
+    users ||--o{ submissions : submits
+    users ||--o{ classroom_posts : authors
+    users ||--o{ post_comments : comments
+    users ||--o{ post_likes : likes
+    users ||--o{ grades : graded_by
+    users ||--o{ activity_logs : logs
+    users ||--o{ notifications : receives
+    users ||--o{ notification_preferences : configures
+
+    classrooms ||--o{ classroom_students : contains
+    classrooms ||--o{ assignments : assigns
+    classrooms ||--o{ classroom_posts : has
+    classrooms ||--o{ grade_categories : categorizes
+    classrooms ||--o{ classroom_settings : configures
+    classrooms ||--o{ notifications : triggers
+    classrooms ||--o{ participation_records : tracks
+    classrooms ||--o{ classroom_files : stores
+
+    assignments ||--o{ submissions : receives
+    assignments ||--o{ grades : evaluates
+    submissions ||--o{ grades : linked
+    classroom_posts ||--o{ post_comments : has
+    classroom_posts ||--o{ post_likes : receives
